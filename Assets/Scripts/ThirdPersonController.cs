@@ -5,6 +5,7 @@ using UnityEngine;
 public class ThirdPersonController : MonoBehaviour
 {
     private CharacterController controller;
+    private Animator anim;
     public Transform cam;
     public Transform LookAtTransform;
 
@@ -35,6 +36,7 @@ public class ThirdPersonController : MonoBehaviour
     {
         //Asignamos el character controller a su variable
         controller = GetComponent<CharacterController>();
+        anim = GetComponentInChildren<Animator>();
 
         //Con esto podemos esconder el icono del raton para que no moleste
         Cursor.lockState = CursorLockMode.Locked;
@@ -80,6 +82,10 @@ public class ThirdPersonController : MonoBehaviour
     //Movimiento TPS con Freelook camera
     void MovementTPS()
     {
+        float z = Input.GetAxisRaw("Vertical");
+        anim.SetFloat("VelZ", z);
+        float x = Input.GetAxisRaw("Horizontal");
+        anim.SetFloat("VelX", x);
         //Creamos un Vector3 y en los ejes X y Z le asignamos los inputs de movimiento
         Vector3 move = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")).normalized;
 
@@ -153,10 +159,12 @@ public class ThirdPersonController : MonoBehaviour
     //Funcion de salto y gravedad
     void Jump()
     {
+        
         //Le asignamos a la boleana isGrounded su valor dependiendo del CheckSpher
         //CheckSphere crea una esfera pasandole la poscion, radio y layer con la que queremos que interactue
         //si la esfera entra en contacto con la capa que le digamos convertira nuestra boleana en true y si no entra en contacto en false
         isGrounded = Physics.CheckSphere(groundSensor.position, sensorRadius, ground);
+        anim.SetBool("Jump", !isGrounded);
 
         //Si estamos en el suelo y playervelocity es menor que 0 hacemos que le vuelva a poner el valor a 0
         //esto es para evitar que siga aplicando fuerza de gravedad cuando estemos en el suelo y evitar comportamientos extraños
@@ -172,7 +180,9 @@ public class ThirdPersonController : MonoBehaviour
             //la altura depende del valor de jumpHeight 
             //Si jumpHeigt es 1 saltara 1 metro de alto
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -2 * gravity); 
+            
         }
+        
 
         //a playervelocity.y le iremos sumando el valor de la gravedad
         playerVelocity.y += gravity * Time.deltaTime;
