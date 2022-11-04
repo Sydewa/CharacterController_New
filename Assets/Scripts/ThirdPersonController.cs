@@ -4,17 +4,19 @@ using UnityEngine;
 
 public class ThirdPersonController : MonoBehaviour
 {
-    private CharacterController controller;
+    
+    [SerializeField]private CharacterController controller;
     private Animator anim;
+    
     public Transform cam;
     public Transform LookAtTransform;
 
-    //variables para controlar velocidad, altura de salto y gravedad
+    [Header("----Fisicas----")]
     public float speed = 5;
     public float jumpHeight = 1;
     public float gravity = -9.81f;
 
-    //variables para el ground sensor
+    [Header("-----GroundSensor-----")]
     public bool isGrounded;
     public Transform groundSensor;
     public float sensorRadius = 0.1f;
@@ -30,6 +32,9 @@ public class ThirdPersonController : MonoBehaviour
     public Cinemachine.AxisState yAxis;
 
     public GameObject[] cameras;
+
+
+    public LayerMask rayLayer;
     
     // Start is called before the first frame update
     void Start()
@@ -52,6 +57,34 @@ public class ThirdPersonController : MonoBehaviour
         
         //Lamamaos la funcion de salto
         Jump();
+        RaycastHit hit;
+        if(Physics.Raycast(transform.position, transform.forward, out hit, 20f, rayLayer))
+        {
+            Vector3 hitPosition = hit.point;
+            float hitDistance = hit.distance;
+            string hitName = hit.transform.name;
+            //Animator hitAnimator = hit.transform.GameObject.GetComponent<Animator>();
+            //hit.transform.GameObject.GetComponent<ScriptRandom>().FunctionRandom();
+            Debug.DrawRay(transform.position, transform.forward * 20f, Color.green);
+            Debug.Log(hitDistance + "Nombre: " + hitName);
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, transform.forward * 20f, Color.red);
+        }
+
+        //
+        /*if(Input.GetButtonDown("Fire1"))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit2;
+            if(Physics.Raycast(ray, out hit2))
+            {
+                Vector3 hitPoint = hit2.point;
+                Debug.Log(hitPoint);
+                transform.position = new Vector3(hit2.point.x, transform.position.y, hit2.point.z);
+            }
+        }*/
     }
 
     void Movement()
@@ -163,8 +196,21 @@ public class ThirdPersonController : MonoBehaviour
         //Le asignamos a la boleana isGrounded su valor dependiendo del CheckSpher
         //CheckSphere crea una esfera pasandole la poscion, radio y layer con la que queremos que interactue
         //si la esfera entra en contacto con la capa que le digamos convertira nuestra boleana en true y si no entra en contacto en false
-        isGrounded = Physics.CheckSphere(groundSensor.position, sensorRadius, ground);
-        anim.SetBool("Jump", !isGrounded);
+        //isGrounded = Physics.CheckSphere(groundSensor.position, sensorRadius, ground);
+        
+        //isGrounded = Physics.Raycast(groundSensor.position, Vector3.down, sensorRadius, ground);
+        if(Physics.Raycast(groundSensor.position, Vector3.down, sensorRadius, ground))
+        {
+            isGrounded = true;
+            Debug.DrawRay(groundSensor.position, Vector3.down * sensorRadius, Color.green);
+        }
+        else
+        {
+            isGrounded = false;
+            Debug.DrawRay(groundSensor.position, Vector3.down * sensorRadius, Color.red);
+        }
+
+        anim.SetBool("Jump", false);
 
         //Si estamos en el suelo y playervelocity es menor que 0 hacemos que le vuelva a poner el valor a 0
         //esto es para evitar que siga aplicando fuerza de gravedad cuando estemos en el suelo y evitar comportamientos extraños
@@ -180,6 +226,7 @@ public class ThirdPersonController : MonoBehaviour
             //la altura depende del valor de jumpHeight 
             //Si jumpHeigt es 1 saltara 1 metro de alto
             playerVelocity.y = Mathf.Sqrt(jumpHeight * -2 * gravity); 
+            anim.SetBool("Jump", true);
             
         }
         
@@ -190,4 +237,14 @@ public class ThirdPersonController : MonoBehaviour
         //asi le aplicaremos la gravedad
         controller.Move(playerVelocity * Time.deltaTime);
     }
+
+    private void OnDrawGizmosSelected() 
+    {
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawRay(transform.position, transform.forward * 20f);
+
+        Gizmos.color = Color.blue;
+        Gizmos.DrawWireSphere(groundSensor.position, sensorRadius);
+    }
+    
 }
