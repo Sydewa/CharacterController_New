@@ -13,6 +13,15 @@ public class Repaso_PlayerController : MonoBehaviour
     float currentVelocity;
     [SerializeField]private float smoothTime = 0.5f;
     
+    [SerializeField]float gravity = -9.81f;
+    [SerializeField]float jumpHeight = 1f;
+    [SerializeField]Transform groundSensor;
+    [SerializeField]float sensorRadius;
+    [SerializeField]LayerMask groundLayer;
+    [SerializeField]bool isGrounded;
+
+    private Vector3 playerVelocity;
+    
 
 
 #endregion
@@ -31,12 +40,26 @@ public class Repaso_PlayerController : MonoBehaviour
         if(movement != Vector3.zero)
         {
             float targetAngle = Mathf.Atan2(movement.x, movement.z) * Mathf.Rad2Deg * cam.eulerAngles.y;
-            float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref currentVelocity, smoothTime);
+            float smoothAngle = Mathf.SmoothDampAngle(transform.eulerAngles.y, cam.eulerAngles.y, ref currentVelocity, smoothTime);
             transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
+
+            Vector3 moveDirection = Quaternion.Euler(0, targetAngle, 0) * transform.forward;
+            controller.Move(moveDirection * speed * Time.deltaTime);
         }
 
+        isGrounded = Physics.CheckSphere(groundSensor.position, sensorRadius, groundLayer);
+        playerVelocity.y += gravity * Time.deltaTime;
+        controller.Move(playerVelocity * Time.deltaTime);
+        if(playerVelocity.y < 0 && isGrounded)
+        {
+            playerVelocity.y = 0;
+        }
 
-        controller.Move(movement * speed * Time.deltaTime);
+        if(isGrounded && Input.GetButtonDown("Jump"))
+        {
+            playerVelocity.y += Mathf.Sqrt(jumpHeight * -2 * gravity);
+        }
+        
 
     }
 }
