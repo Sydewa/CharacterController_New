@@ -11,6 +11,12 @@ public class ThirdPersonController : MonoBehaviour
     public Transform cam;
     public Transform LookAtTransform;
 
+    //Ragdoll cosas
+    private Rigidbody[] ragdollBodys;
+    private SphereCollider[] sphereColliders;
+    private CapsuleCollider[] capsuleColliders;
+    private bool isRagdoll = false;
+
     [Header("----Fisicas----")]
     public float speed = 5;
     public float jumpHeight = 1;
@@ -51,27 +57,44 @@ public class ThirdPersonController : MonoBehaviour
 
         //Con esto podemos esconder el icono del raton para que no moleste
         Cursor.lockState = CursorLockMode.Locked;
+
+        ragdollBodys = GetComponentsInChildren<Rigidbody>();
+        capsuleColliders = GetComponentsInChildren<CapsuleCollider>();
+        sphereColliders = GetComponentsInChildren<SphereCollider>();
+        
+        foreach(Rigidbody body in ragdollBodys)
+        {
+            body.isKinematic = true;
+        }
+        foreach(CapsuleCollider body in capsuleColliders)
+        {
+            body.enabled = false;
+        }
+        foreach(SphereCollider body in sphereColliders)
+        {
+            body.enabled = false;
+        }
     }
 
     // Update is called once per frame
     void Update()
     {
-        //Llamamos la funcion de movimiento
-        //Movement();
-        MovementTPS();
-        //MovementTPS2();
-        PickObjects();
+
+        if(!isRagdoll)
+        {
+            MovementTPS();
+            Jump();
+            PickObjects();
+        }
         
-        //Lamamaos la funcion de salto
-        Jump();
+        RagdollActivate();
+
         RaycastHit hit;
         if(Physics.Raycast(transform.position, transform.forward, out hit, 20f, rayLayer))
         {
             Vector3 hitPosition = hit.point;
             float hitDistance = hit.distance;
             string hitName = hit.transform.name;
-            //Animator hitAnimator = hit.transform.GameObject.GetComponent<Animator>();
-            //hit.transform.GameObject.GetComponent<ScriptRandom>().FunctionRandom();
             Debug.DrawRay(transform.position, transform.forward * 20f, Color.green);
             
         }
@@ -80,18 +103,6 @@ public class ThirdPersonController : MonoBehaviour
             Debug.DrawRay(transform.position, transform.forward * 20f, Color.red);
         }
 
-        //
-        /*if(Input.GetButtonDown("Fire1"))
-        {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            RaycastHit hit2;
-            if(Physics.Raycast(ray, out hit2))
-            {
-                Vector3 hitPoint = hit2.point;
-                Debug.Log(hitPoint);
-                transform.position = new Vector3(hit2.point.x, transform.position.y, hit2.point.z);
-            }
-        }*/
     }
 
     void Movement()
@@ -299,6 +310,28 @@ public class ThirdPersonController : MonoBehaviour
             pickedObject.GetComponent<Rigidbody>().isKinematic = false;
             pickedObject = null;
         }
+    }
+
+    void RagdollActivate()
+    {
+        if(Input.GetKeyDown(KeyCode.F))
+        {
+            foreach(Rigidbody body in ragdollBodys)
+            {
+                body.isKinematic = false;
+            }
+            foreach(CapsuleCollider body in capsuleColliders)
+            {
+                body.enabled = true;
+            }
+            foreach(SphereCollider body in sphereColliders)
+            {
+                body.enabled = true;
+            }
+            controller.enabled = false;
+            anim.enabled = false;
+        }
+
     }
     
 }
